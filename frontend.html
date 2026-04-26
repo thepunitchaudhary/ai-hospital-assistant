@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City Hospital - Sarah AI Receptionist</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f7f8fc; }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  #auth-screen {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .auth-card {
+    background: rgba(255,255,255,0.97);
+    border-radius: 24px; padding: 40px 36px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+  }
+  .hospital-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .tab-bar {
+    display: flex; background: #f3f4f6; border-radius: 12px;
+    padding: 4px; margin-bottom: 24px; gap: 4px;
+  }
+  .tab-btn {
+    flex: 1; padding: 9px; border: none; border-radius: 9px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; background: transparent; color: #9ca3af;
+  }
+  .tab-btn.active { background: #667eea; color: #fff; }
+  .input-wrap { position: relative; margin-bottom: 14px; }
+  .input-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: #9ca3af; pointer-events: none; display: flex;
+  }
+  .input-field {
+    width: 100%; padding: 13px 14px 13px 42px;
+    border: 1.5px solid #e5e7eb; border-radius: 12px;
+    font-size: 15px; outline: none; color: #111827;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+  .input-field:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+    background: #fff;
+  }
+  .input-field::placeholder { color: #9ca3af; }
+  .auth-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 4px;
+  }
+  .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(102,126,234,0.5); }
+  .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .error-msg {
+    background: #fef2f2; border: 1px solid #fecaca; color: #dc2626;
+    border-radius: 10px; padding: 10px 14px; font-size: 13px;
+    margin-bottom: 14px; display: none;
+  }
+  .success-msg {
+    background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a;
+    border-radius: 10px; padding: 10px 14px; font-size: 13px;
+    margin-bottom: 14px; display: none;
+  }
+  .switch-link {
+    text-align: center; font-size: 13px; color: #9ca3af; margin-top: 16px;
+  }
+  .switch-link a { color: #667eea; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .online-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #f0fdf4; color: #16a34a;
+    border: 1px solid #bbf7d0; border-radius: 20px;
+    padding: 4px 12px; font-size: 12px; font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .badge-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; animation: blink 1.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  #dashboard-screen { flex-direction: column; background: #f7f8fc; }
+  .dash-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 18px 20px; display: flex;
+    align-items: center; justify-content: space-between;
+  }
+  .dash-header-left { display: flex; align-items: center; gap: 12px; }
+  .header-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .user-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; color: #fff;
+    border: 2px solid rgba(255,255,255,0.4); cursor: pointer;
+  }
+  .dash-body { padding: 20px; flex: 1; overflow-y: auto; max-width: 480px; margin: 0 auto; width: 100%; }
+  .greeting { margin-bottom: 20px; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: #fff; border-radius: 16px; padding: 16px;
+    border: 1px solid #f0f0f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .next-appt-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 18px; padding: 20px; margin-bottom: 20px;
+    position: relative; overflow: hidden;
+  }
+  .next-appt-card::after {
+    content: ""; position: absolute; right: -30px; top: -30px;
+    width: 120px; height: 120px; background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .appt-row {
+    background: #fff; border-radius: 16px; padding: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid #f0f0f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 10px;
+  }
+  .appt-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .status-badge {
+    font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+  }
+  .status-confirmed  { background: #dcfce7; color: #16a34a; }
+  .status-completed  { background: #f1f5f9; color: #64748b; }
+  .status-cancelled  { background: #fef2f2; color: #dc2626; }
+  .cancel-btn {
+    background: none; border: none; color: #dc2626; font-size: 18px;
+    cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .cancel-btn:hover { background: #fef2f2; }
+  .voice-btn {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border: none; border-radius: 16px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 20px; transition: transform 0.15s;
+  }
+  .voice-btn:hover { transform: translateY(-2px); }
+  .section-title {
+    font-size: 17px; font-weight: 700; color: #1a1a2e;
+    margin-bottom: 12px; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+  .empty-state {
+    text-align: center; padding: 30px 20px; color: #9ca3af; font-size: 14px;
+  }
+  .appt-loading {
+    text-align: center; padding: 30px 20px; color: #9ca3af; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .logout-btn {
+    background: rgba(255,255,255,0.2); border: none; color: #fff;
+    font-size: 12px; padding: 6px 12px; border-radius: 8px;
+    cursor: pointer; font-weight: 500;
+  }
+
+  #call-screen {
+    background: #0a0a0a; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    padding-bottom: 88px;
+  }
+
+  .glowing-ring {
+    width: 220px; height: 220px; border-radius: 50%;
+    background: #0a0a0a;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .glowing-ring::before {
+    content: ""; position: absolute; inset: -6px;
+    background: conic-gradient(#f472b6, #a78bfa, #60a5fa, #34d399, #f472b6);
+    border-radius: 50%; filter: blur(18px);
+    animation: spin 4s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .glowing-ring.speaking::before {
+    animation: spin 1s linear infinite;
+    filter: blur(24px) brightness(1.5);
+  }
+
+  .timer-badge {
+    position: absolute; top: 16px; right: 16px;
+    background: rgba(255,255,255,0.12); color: #fff;
+    border-radius: 20px; padding: 6px 14px; font-size: 14px;
+    font-weight: 600; display: flex; align-items: center; gap: 6px;
+    z-index: 10;
+  }
+  .timer-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: blink 1.4s infinite; }
+
+  #subtitle-wrap {
+    position: fixed; bottom: 110px; left: 50%;
+    transform: translateX(-50%); width: 80%; max-width: 700px;
+    text-align: center; pointer-events: none; z-index: 20;
+  }
+  .subtitle-line {
+    display: inline-block; padding: 6px 20px; border-radius: 8px;
+    font-size: 18px; line-height: 1.5; margin: 4px 0;
+    max-width: 100%; word-wrap: break-word;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .subtitle-line.show { opacity: 1; transform: translateY(0); }
+  #sub-user { background: rgba(96,165,250,0.25); color: #93c5fd; border: 1px solid rgba(96,165,250,0.3); font-style: italic; }
+  #sub-ai   { background: rgba(0,0,0,0.75); color: #fff; border: 1px solid rgba(255,255,255,0.15); font-weight: 500; }
+
+  #full-log {
+    position: fixed; top: 60px; right: 16px;
+    width: 260px; max-height: 45vh;
+    background: rgba(17,17,17,0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 10px 14px;
+    overflow-y: auto; font-size: 12px;
+    color: #9ca3af; z-index: 10;
+  }
+  #full-log .log-entry { margin-bottom: 8px; }
+  #full-log .log-entry span.you { color: #60a5fa; font-weight: 600; }
+  #full-log .log-entry span.sarah { color: #f9a8d4; font-weight: 600; }
+
+  .call-bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(10, 10, 20, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 -6px 28px rgba(0,0,0,0.5);
+    height: 80px;
+  }
+  .call-bottom-bar.visible { display: flex; }
+
+  .bar-agent { display: flex; align-items: center; gap: 12px; }
+  .bar-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.3);
+  }
+  .bar-name { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.2; }
+  .bar-status {
+    font-size: 12px; color: #a78bfa;
+    display: flex; align-items: center; gap: 5px; margin-top: 3px;
+  }
+  .bar-status-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #34d399;
+    animation: blink 1.4s infinite;
+    transition: background 0.3s;
+  }
+  .bar-status-dot.listening { background: #34d399; }
+  .bar-status-dot.speaking  { background: #60a5fa; }
+  .bar-status-dot.thinking  { background: #fbbf24; }
+
+  .bar-end-btn {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #dc2626; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 18px rgba(220,38,38,0.55);
+    transition: transform 0.15s, box-shadow 0.15s;
+    flex-shrink: 0;
+  }
+  .bar-end-btn:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(220,38,38,0.7); }
+  .bar-end-btn:active { transform: scale(0.95); }
+
+  #mic-status {
+    position: fixed; bottom: 95px; left: 24px;
+    display: flex; align-items: center; gap: 8px;
+    color: #9ca3af; font-size: 13px; z-index: 30;
+  }
+  .mic-dot { width:10px; height:10px; border-radius:50%; background:#6b7280; transition: background 0.3s; }
+  .mic-dot.active { background:#34d399; animation: blink 1s infinite; }
+
+  .spinner {
+    display: inline-block; width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  .text-input-row {
+    position: fixed; bottom: 88px; left: 50%;
+    transform: translateX(-50%);
+    width: 90%; max-width: 500px;
+    display: none; align-items: center; gap: 8px;
+    z-index: 25;
+  }
+  .text-input-row.visible { display: flex; }
+  .text-input-field {
+    flex: 1; padding: 12px 16px;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px; color: #fff; font-size: 14px; outline: none;
+  }
+  .text-input-field::placeholder { color: rgba(255,255,255,0.4); }
+  .text-send-btn {
+    padding: 12px 18px; background: #667eea; border: none;
+    border-radius: 12px; color: #fff; font-weight: 700;
+    cursor: pointer; font-size: 14px;
+  }
+  .text-toggle-btn {
+    position: fixed; bottom: 95px; right: 24px;
+    background: rgba(255,255,255,0.12); border: none; color: #fff;
+    font-size: 12px; padding: 6px 12px; border-radius: 8px;
+    cursor: pointer; z-index: 30;
+  }
+
+  @media (max-width: 480px) {
+    .auth-card { padding: 28px 20px; }
+    #full-log { display: none; }
+    .subtitle-line { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="auth-screen" class="screen active">
+  <div class="auth-card">
+    <div class="hospital-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+          stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div style="text-align:center; margin-bottom:6px;">
+      <h2 style="font-size:24px; font-weight:800; color:#111827;">City Hospital</h2>
+      <p style="color:#6b7280; font-size:13px; margin:4px 0 14px;">Your Health, Our Priority</p>
+      <div class="online-badge"><span class="badge-dot"></span>Sarah is Online</div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="showTab('register')">Register</button>
+    </div>
+
+    <div id="auth-error" class="error-msg"></div>
+    <div id="auth-success" class="success-msg"></div>
+
+    <div id="login-form">
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </span>
+        <input id="login-email" type="email" placeholder="Your email address" class="input-field">
+      </div>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </span>
+        <input id="login-password" type="password" placeholder="Your password" class="input-field">
+      </div>
+      <button class="auth-btn" onclick="doLogin()" id="login-btn">Sign In</button>
+      <div class="switch-link">Don't have an account? <a onclick="showTab('register')">Register here</a></div>
+    </div>
+
+    <div id="register-form" style="display:none;">
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </span>
+        <input id="reg-name" type="text" placeholder="Your full name" class="input-field">
+      </div>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </span>
+        <input id="reg-email" type="email" placeholder="Your email address" class="input-field">
+      </div>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 01.12 2.82 2 2 0 012.12 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+        </span>
+        <input id="reg-phone" type="tel" placeholder="Phone number (optional)" class="input-field">
+      </div>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </span>
+        <input id="reg-password" type="password" placeholder="Create a password (min 6 chars)" class="input-field">
+      </div>
+      <button class="auth-btn" onclick="doRegister()" id="register-btn">Create Account</button>
+      <div class="switch-link">Already have an account? <a onclick="showTab('login')">Sign in</a></div>
+    </div>
+
+    <p style="text-align:center;font-size:11.5px;color:#9ca3af;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:5px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Your information is secure and private
+    </p>
+  </div>
+</div>
+
+<div id="dashboard-screen" class="screen" style="flex-direction:column;">
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <div class="header-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.7);">City Hospital</p>
+        <p style="margin:0;font-size:16px;font-weight:700;color:#fff;">Patient Dashboard</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="user-avatar-btn" class="user-avatar"></div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="dash-body">
+    <div class="greeting">
+      <p style="font-size:13px;color:#888;margin-bottom:2px;">Good day,</p>
+      <p id="greeting-name" style="font-size:22px;font-weight:800;color:#1a1a2e;"></p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p style="font-size:12px;color:#888;margin-bottom:6px;">Total Appointments</p>
+        <p id="stat-total" style="font-size:28px;font-weight:800;color:#667eea;">—</p>
+        <p style="font-size:11px;color:#22c55e;margin-top:2px;">All time</p>
+      </div>
+      <div class="stat-card">
+        <p style="font-size:12px;color:#888;margin-bottom:6px;">Upcoming</p>
+        <p id="stat-upcoming" style="font-size:28px;font-weight:800;color:#f59e0b;">—</p>
+        <p id="stat-next" style="font-size:11px;color:#888;margin-top:2px;">—</p>
+      </div>
+    </div>
+
+    <div id="next-appt-section" class="next-appt-card" style="display:none;">
+      <p style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:4px;">Next Appointment</p>
+      <p id="next-doctor" style="font-size:18px;font-weight:700;color:#fff;margin-bottom:4px;"></p>
+      <p id="next-dept"   style="font-size:13px;color:rgba(255,255,255,0.8);margin-bottom:12px;"></p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span id="next-date" style="font-size:13px;color:rgba(255,255,255,0.9);"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span id="next-time" style="font-size:13px;color:rgba(255,255,255,0.9);"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span>My Appointments</span>
+      <button onclick="loadAppointments()" style="background:#ede9ff;color:#667eea;border:none;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;">Refresh</button>
+    </div>
+    <div id="appt-list">
+      <div class="appt-loading">
+        <div class="spinner" style="border-top-color:#667eea;border-color:rgba(102,126,234,0.2);"></div>
+        Loading appointments…
+      </div>
+    </div>
+
+    <button class="voice-btn" onclick="startCall()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 01.12 2.82 2 2 0 012.12 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+      </svg>
+      Start Voice Call with Sarah
+    </button>
+  </div>
+</div>
+
+<div id="call-screen" class="screen">
+
+  <div class="timer-badge">
+    <span class="timer-dot"></span>
+    <span id="timer">00:00</span>
+  </div>
+
+  <div id="orb" class="glowing-ring">
+    <div style="width:180px;height:180px;border-radius:50%;background:conic-gradient(#f472b6 0%,#a78bfa 33%,#60a5fa 66%,#34d399 100%);opacity:0.85;"></div>
+  </div>
+
+  <div id="subtitle-wrap">
+    <div id="sub-user" class="subtitle-line"></div>
+    <div id="sub-ai"   class="subtitle-line"></div>
+  </div>
+
+  <div id="mic-status">
+    <div id="mic-dot" class="mic-dot"></div>
+    <span id="mic-label">Mic off</span>
+  </div>
+
+  <button class="text-toggle-btn" id="textToggleBtn" onclick="toggleTextInput()">⌨️ Type</button>
+
+  <div class="text-input-row" id="textInputRow">
+    <input id="textInputField" class="text-input-field" placeholder="Type your message…"
+           onkeydown="if(event.key==='Enter') sendTyped()">
+    <button class="text-send-btn" onclick="sendTyped()">Send</button>
+  </div>
+
+  <div id="full-log"></div>
+</div>
+
+<div class="call-bottom-bar" id="callBottomBar">
+  <div class="bar-agent">
+    <div class="bar-avatar">AI</div>
+    <div>
+      <div class="bar-name">Sarah (Receptionist)</div>
+      <div class="bar-status">
+        <span class="bar-status-dot listening" id="barDot"></span>
+        <span id="barStatusText">Listening…</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="bar-end-btn" id="end-call-btn" title="End Call">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+      <path d="M10.68 13.31a16 16 0 003.41 2.6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 11.5 19.79 19.79 0 011 2.18 2 2 0 013 0h3a2 2 0 011.72 1.12 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.68 7.31"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+const API = "";
+
+let currentUser  = null;
+let authToken    = null;
+let sessionId    = null;
+let recognition;
+let currentAudio = null;
+let timerInterval;
+let seconds      = 0;
+let isProcessing = false;
+let isSpeaking   = false;
+let textInputVisible = false;
+
+const saved = localStorage.getItem("ch_user");
+if (saved) {
+  try {
+    const d = JSON.parse(saved);
+    currentUser = d.user;
+    authToken   = d.token;
+    showDashboard();
+  } catch(e) { localStorage.removeItem("ch_user"); }
+}
+
+function authHeaders() {
+  return { "Content-Type": "application/json", "Authorization": "Bearer " + authToken };
+}
+
+function showTab(tab) {
+  document.getElementById("login-form").style.display    = tab === "login"    ? "block" : "none";
+  document.getElementById("register-form").style.display = tab === "register" ? "block" : "none";
+  document.querySelectorAll(".tab-btn").forEach((b, i) => {
+    b.classList.toggle("active", (i===0 && tab==="login") || (i===1 && tab==="register"));
+  });
+  clearMessages();
+}
+
+function clearMessages() {
+  ["auth-error","auth-success"].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = "none"; el.textContent = "";
+  });
+}
+function showError(msg)   { const e = document.getElementById("auth-error");   e.textContent = msg; e.style.display = "block"; }
+function showSuccess(msg) { const s = document.getElementById("auth-success"); s.textContent = msg; s.style.display = "block"; }
+
+async function doRegister() {
+  clearMessages();
+  const name  = document.getElementById("reg-name").value.trim();
+  const email = document.getElementById("reg-email").value.trim();
+  const phone = document.getElementById("reg-phone").value.trim();
+  const pass  = document.getElementById("reg-password").value;
+  if (!name || !email || !pass) { showError("Please fill in name, email and password."); return; }
+  if (pass.length < 6)          { showError("Password must be at least 6 characters."); return; }
+  const btn = document.getElementById("register-btn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res  = await fetch(`${API}/auth/register`, {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ full_name: name, email, phone, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.detail || "Registration failed."); return; }
+    currentUser = data.user; authToken = data.token;
+    localStorage.setItem("ch_user", JSON.stringify({ user: currentUser, token: authToken }));
+    showSuccess("Account created! Welcome to City Hospital 🎉");
+    setTimeout(showDashboard, 1200);
+  } catch(e) { showError("Cannot connect to server. Make sure app.py is running."); }
+  finally { btn.disabled = false; btn.textContent = "Create Account"; }
+}
+
+async function doLogin() {
+  clearMessages();
+  const email = document.getElementById("login-email").value.trim();
+  const pass  = document.getElementById("login-password").value;
+  if (!email || !pass) { showError("Please enter email and password."); return; }
+  const btn = document.getElementById("login-btn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res  = await fetch(`${API}/auth/login`, {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.detail || "Login failed."); return; }
+    currentUser = data.user; authToken = data.token;
+    localStorage.setItem("ch_user", JSON.stringify({ user: currentUser, token: authToken }));
+    showDashboard();
+  } catch(e) { showError("Cannot connect to server. Make sure app.py is running."); }
+  finally { btn.disabled = false; btn.textContent = "Sign In"; }
+}
+
+function doLogout() {
+  currentUser = null; authToken = null;
+  localStorage.removeItem("ch_user");
+  showScreen("auth-screen");
+}
+
+function showDashboard() {
+  document.getElementById("greeting-name").textContent = currentUser.full_name + " 👋";
+  const initials = currentUser.full_name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+  document.getElementById("user-avatar-btn").textContent = initials;
+  showScreen("dashboard-screen");
+  loadAppointments();
+}
+
+async function loadAppointments() {
+  document.getElementById("appt-list").innerHTML =
+    '<div class="appt-loading"><div class="spinner" style="border-top-color:#667eea;border-color:rgba(102,126,234,0.2);"></div>Loading appointments…</div>';
+  try {
+    const res  = await fetch(`${API}/auth/appointments/${currentUser.id}`, { headers: authHeaders() });
+    if (res.status === 401) { doLogout(); return; }
+    const data = await res.json();
+    renderAppointments(data.appointments);
+  } catch(e) {
+    document.getElementById("appt-list").innerHTML = '<div class="empty-state">Could not load appointments.</div>';
+  }
+}
+
+async function cancelAppointment(id) {
+  if (!confirm("Cancel this appointment?")) return;
+  try {
+    const res = await fetch(`${API}/auth/appointments/${id}`, {
+      method: "DELETE", headers: authHeaders()
+    });
+    if (res.ok) loadAppointments();
+    else alert("Could not cancel appointment. Please try again.");
+  } catch(e) {
+    alert("Could not connect to server.");
+  }
+}
+
+const deptIcon  = { "Cardiology": "🫀", "Neurology": "🧠", "Orthopedics": "🦴" };
+const deptBg    = { "Cardiology": "#e0f2fe", "Neurology": "#fce7f3", "Orthopedics": "#ede9ff" };
+
+function getDept(doctor) {
+  if (doctor.includes("Cardiology"))  return "Cardiology";
+  if (doctor.includes("Neurology"))   return "Neurology";
+  if (doctor.includes("Orthopedics")) return "Orthopedics";
+  return "General";
+}
+
+function renderAppointments(appts) {
+  const list = document.getElementById("appt-list");
+  document.getElementById("stat-total").textContent    = appts.length;
+  const upcoming = appts.filter(a => a.status === "CONFIRMED");
+  document.getElementById("stat-upcoming").textContent = upcoming.length;
+
+  if (upcoming.length > 0) {
+    const next = upcoming[0];
+    const dept = getDept(next.doctor);
+    document.getElementById("next-appt-section").style.display = "block";
+    document.getElementById("next-doctor").textContent = next.doctor.split("(")[0].trim();
+    document.getElementById("next-dept").textContent   = dept;
+    document.getElementById("next-date").textContent   = next.date || "—";
+    document.getElementById("next-time").textContent   = next.time || "—";
+    document.getElementById("stat-next").textContent   = "Next: " + (next.date || "—");
+  } else {
+    document.getElementById("next-appt-section").style.display = "none";
+    document.getElementById("stat-next").textContent = "None scheduled";
+  }
+
+  if (appts.length === 0) {
+    list.innerHTML = '<div class="empty-state">No appointments yet.<br>Start a voice call with Sarah to book one!</div>';
+    return;
+  }
+
+  list.innerHTML = appts.map(a => {
+    const dept = getDept(a.doctor);
+    const icon = deptIcon[dept] || "🏥";
+    const bg   = deptBg[dept]   || "#f3f4f6";
+    let cls, lbl;
+    if (a.status === "CONFIRMED")       { cls = "status-confirmed"; lbl = "Confirmed"; }
+    else if (a.status === "CANCELLED")  { cls = "status-cancelled"; lbl = "Cancelled"; }
+    else                                { cls = "status-completed"; lbl = "Completed"; }
+
+    const canCancel = a.status === "CONFIRMED";
+    return `
+      <div class="appt-row">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <div class="appt-icon" style="background:${bg};">${icon}</div>
+          <div style="min-width:0;">
+            <p style="font-size:14px;font-weight:700;color:#1a1a2e;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.doctor.split("(")[0].trim()}</p>
+            <p style="font-size:12px;color:#888;margin:2px 0 0;">${dept} · ${a.date || ""} ${a.time || ""}</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="status-badge ${cls}">${lbl}</span>
+          ${canCancel ? `<button class="cancel-btn" onclick="cancelAppointment(${a.id})" title="Cancel">✕</button>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.getElementById("callBottomBar").classList.toggle("visible", id === "call-screen");
+}
+
+function setBarStatus(status) {
+  const dot  = document.getElementById("barDot");
+  const text = document.getElementById("barStatusText");
+  dot.className = "bar-status-dot " + status;
+  if (status === "listening")      text.textContent = "Listening…";
+  else if (status === "speaking")  text.textContent = "Speaking…";
+  else if (status === "thinking")  text.textContent = "Processing…";
+}
+
+function toggleTextInput() {
+  textInputVisible = !textInputVisible;
+  document.getElementById("textInputRow").classList.toggle("visible", textInputVisible);
+  document.getElementById("textToggleBtn").textContent = textInputVisible ? "🎤 Voice" : "⌨️ Type";
+}
+
+function sendTyped() {
+  const field = document.getElementById("textInputField");
+  const text  = field.value.trim();
+  if (!text || isProcessing || isSpeaking) return;
+  field.value = "";
+  isProcessing = true;
+  setBarStatus("thinking");
+  showSubtitle("user", text);
+  addLog("You", text);
+  handleBackend(text);
+}
+
+async function startCall() {
+  showScreen("call-screen");
+  startTimer();
+  const res = await fetch(`${API}/agent/new_session`, { method: "POST" });
+  sessionId = (await res.json()).session_id;
+  isProcessing = true;
+  setBarStatus("thinking");
+  await handleBackend("hello");
+}
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous     = false;
+  recognition.interimResults = false;
+  recognition.lang           = "en-IN";
+
+  recognition.onresult = function(e) {
+    if (isProcessing || isSpeaking) return;
+    isProcessing = true;
+    setMicUI(false);
+    setBarStatus("thinking");
+    const text = e.results[0][0].transcript;
+    showSubtitle("user", text);
+    addLog("You", text);
+    handleBackend(text);
+  };
+
+  recognition.onend = function() {
+    if (sessionId && !isSpeaking && !isProcessing && !textInputVisible) {
+      setTimeout(() => { try { recognition.start(); setMicUI(true); } catch(e){} }, 300);
+    }
+  };
+
+  recognition.onerror = function(e) {
+    if (e.error === "no-speech") return;
+    console.warn("STT:", e.error);
+  };
+}
+
+function setMicUI(on) {
+  document.getElementById("mic-dot").className     = "mic-dot" + (on ? " active" : "");
+  document.getElementById("mic-label").textContent = on ? "Listening…" : "Mic off";
+}
+
+function setSpeakingUI(on) {
+  const orb = document.getElementById("orb");
+  if (on) { orb.classList.add("speaking"); setBarStatus("speaking"); setMicUI(false); }
+  else    { orb.classList.remove("speaking"); }
+}
+
+let subUserTimer, subAITimer;
+function showSubtitle(who, text) {
+  if (who === "user") {
+    clearTimeout(subUserTimer);
+    const el = document.getElementById("sub-user");
+    el.textContent = "You: " + text; el.classList.add("show");
+    subUserTimer = setTimeout(() => el.classList.remove("show"), 6000);
+  } else {
+    clearTimeout(subAITimer);
+    const el = document.getElementById("sub-ai");
+    el.textContent = "Sarah: " + text; el.classList.add("show");
+  }
+}
+function hideAISubtitle() {
+  subAITimer = setTimeout(() => document.getElementById("sub-ai").classList.remove("show"), 2000);
+}
+
+function addLog(sender, text) {
+  const el = document.createElement("div");
+  el.className = "log-entry";
+  const cls = sender === "You" ? "you" : "sarah";
+  el.innerHTML = `<span class="${cls}">${sender}:</span> ${text}`;
+  const log = document.getElementById("full-log");
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+
+function startTimer() {
+  seconds = 0; clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    seconds++;
+    const m = String(Math.floor(seconds/60)).padStart(2,"0");
+    const s = String(seconds%60).padStart(2,"0");
+    document.getElementById("timer").textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+async function handleBackend(text) {
+  try {
+    const res = await fetch(`${API}/agent/message`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        session_id: sessionId,
+        text,
+        name:    currentUser?.full_name,
+        email:   currentUser?.email,
+        user_id: currentUser?.id
+      })
+    });
+    const data = await res.json();
+    showSubtitle("ai", data.text);
+    addLog("Sarah", data.text);
+
+    if (currentAudio) { currentAudio.pause(); currentAudio.onended = null; currentAudio = null; }
+
+    if (data.audio) {
+      isSpeaking = true; isProcessing = false; setSpeakingUI(true);
+      currentAudio = new Audio("data:audio/mp3;base64," + data.audio);
+      currentAudio.onended = () => {
+        currentAudio = null; isSpeaking = false; isProcessing = false;
+        setSpeakingUI(false); hideAISubtitle();
+        setBarStatus("listening");
+        if (sessionId && !textInputVisible) {
+          setTimeout(() => { try { recognition.start(); setMicUI(true); } catch(e){} }, 500);
+        }
+      };
+      try { recognition.stop(); } catch(e){}
+      currentAudio.play().catch(() => {
+        isSpeaking = false; isProcessing = false; setSpeakingUI(false); hideAISubtitle();
+        setBarStatus("listening");
+        if (!textInputVisible) try { recognition.start(); setMicUI(true); } catch(e){}
+      });
+    } else {
+      isSpeaking = false; isProcessing = false; setSpeakingUI(false); hideAISubtitle();
+      setBarStatus("listening");
+      if (sessionId && !textInputVisible) {
+        setTimeout(() => { try { recognition.start(); setMicUI(true); } catch(e){} }, 400);
+      }
+    }
+  } catch(err) {
+    console.error(err);
+    isSpeaking = false; isProcessing = false; setSpeakingUI(false);
+    setBarStatus("listening");
+    if (sessionId && !textInputVisible) {
+      setTimeout(() => { try { recognition.start(); setMicUI(true); } catch(e){} }, 400);
+    }
+  }
+}
+
+document.getElementById("end-call-btn").onclick = () => {
+  try { recognition.stop(); } catch(e){}
+  if (currentAudio) { currentAudio.pause(); currentAudio.onended = null; currentAudio = null; }
+  clearInterval(timerInterval);
+  document.getElementById("timer").textContent = "00:00";
+  sessionId = null; isProcessing = false; isSpeaking = false;
+  textInputVisible = false;
+  document.getElementById("textInputRow").classList.remove("visible");
+  document.getElementById("textToggleBtn").textContent = "⌨️ Type";
+  document.getElementById("sub-user").classList.remove("show");
+  document.getElementById("sub-ai").classList.remove("show");
+  document.getElementById("full-log").innerHTML = "";
+  setMicUI(false); setSpeakingUI(false);
+  showScreen("dashboard-screen");
+  loadAppointments();
+};
+</script>
+</body>
+</html>
