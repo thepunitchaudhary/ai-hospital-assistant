@@ -1,190 +1,168 @@
-# 🏥 City Hospital – Sarah AI Receptionist
+# 🏥 City Hospital — Sarah AI Receptionist
 
-An AI-powered voice-based hospital assistant that allows patients to **register, log in, and book appointments using natural voice interaction**. Built with a full-stack architecture and deployable on cloud platforms.
-
----
-
-## 🚀 Features
-
-* 🔐 **Secure Authentication**
-
-  * User registration & login
-  * Password hashing for security
-
-* 🎙️ **AI Voice Assistant (Sarah)**
-
-  * Book appointments using natural speech
-  * Powered by Groq AI
-
-* 📅 **Smart Appointment System**
-
-  * Book, store, and retrieve appointments
-  * Linked with user accounts
-
-* 📊 **Patient Dashboard**
-
-  * View appointment history
-  * Auto-refresh after booking
-
-* 📧 **Email Notifications**
-
-  * Welcome email on registration
-  * Appointment confirmation emails
-
-* 🌐 **Persistent Login**
-
-  * Token-based authentication
-  * User stays logged in
+> An AI-powered, voice-based hospital appointment system. Talk naturally to **Sarah**, your virtual receptionist, and she'll book your appointment, check slot availability, and send you an email confirmation — all hands-free.
 
 ---
 
-## 🏥 Departments & Doctors
+## 🎬 Demo
 
-| Department  | Doctor          |
-| ----------- | --------------- |
-| Cardiology  | Dr. Meera Patel |
-| Neurology   | Dr. Arjun Rao   |
-| Orthopedics | Dr. Priya Nair  |
+> *Patient speaks → Sarah listens → Appointment booked → Email sent*
+
+![Sarah AI Receptionist](./1777219119573_image.png)
 
 ---
 
-## ⚙️ Tech Stack
+## ✨ Features
 
-* **Backend:** FastAPI (Python)
-* **Frontend:** HTML, CSS, JavaScript
-* **Database:** SQLite
-* **AI Integration:** Groq API
-* **Email Service:** SMTP (Gmail)
+- 🎙️ **Voice-First Interface** — Speak naturally using your browser's microphone; no typing needed
+- 🤖 **AI-Powered Conversations** — Groq LLaMA 3.3 70B handles intent understanding and multi-turn dialogue
+- 📅 **Real-Time Slot Checking** — Instantly checks and books available appointment slots
+- 📧 **Email Confirmation** — Sends an automated confirmation email upon successful booking
+- 🗣️ **Text-to-Speech Replies** — Sarah responds with a lifelike voice using Google TTS
+- 🌐 **Multilingual Support** — English (India), Hindi, and Telugu
+- 💾 **SQLite Database** — Lightweight, zero-config persistent storage
+- 🔄 **Animated Visual Feedback** — Beautiful glowing ring shows listening / thinking / speaking states
 
 ---
 
-## 📂 Project Structure
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Backend** | FastAPI + Uvicorn |
+| **AI / LLM** | Groq API (LLaMA 3.3 70B) |
+| **Speech-to-Text** | Web Speech API (browser-native) |
+| **Text-to-Speech** | gTTS (Google Text-to-Speech) |
+| **Database** | SQLite3 |
+| **Email** | Python smtplib (SMTP) |
+| **Frontend** | HTML + Tailwind CSS + Vanilla JS |
+
+---
+
+## 📁 Project Structure
 
 ```
-AI Hospital Assistant/
-│
-├── app.py
-├── auth.py
-├── database.py
-├── models.py
-├── utils.py
-├── agent.py
-├── frontend.html
-├── requirements.txt
-├── .env (not uploaded to GitHub)
+ai-hospital-assistant/
+├── app.py                  # FastAPI backend — agent logic, tools, TTS, email
+├── frontend.html           # Single-page voice UI
+├── appointments_poc.db     # SQLite database (auto-created)
+├── requirements.txt        # Python dependencies
+├── .env                    # Environment variables (not committed)
 └── README.md
 ```
 
 ---
 
-## 🛠️ Setup Instructions
+## ⚙️ Setup & Installation
 
-### 1️⃣ Install Dependencies
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/thepunitchaudhary/ai-hospital-assistant.git
+cd ai-hospital-assistant
+```
+
+### 2. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+### 3. Configure Environment Variables
 
-### 2️⃣ Create `.env` File
+Create a `.env` file in the project root:
 
-Create a `.env` file in the root folder:
+```env
+GROQ_API_KEY=your_groq_api_key_here
 
-```
-GROQ_API_KEY=your_groq_api_key
 SMTP_EMAIL=your_email@gmail.com
-SMTP_PASSWORD=your_gmail_app_password
+SMTP_PASSWORD=your_app_password
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
 ```
 
----
+> 💡 **Gmail users:** Use an [App Password](https://myaccount.google.com/apppasswords) instead of your regular password.
 
-### 🔑 How to Get Credentials
-
-* **GROQ API Key:** https://console.groq.com
-* **SMTP Email:** Your Gmail address
-* **SMTP Password:**
-
-  * Go to Google Account → Security
-  * Enable 2-Step Verification
-  * Generate App Password (Mail, Windows)
-
----
-
-### 3️⃣ Run the Application
+### 4. Run the Server
 
 ```bash
 python app.py
 ```
 
----
-
-### 4️⃣ Open in Browser
-
-```
-http://127.0.0.1:8000
-```
+Then open your browser at **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
 
 ---
 
-## 🌐 Deployment (Render)
+## 🗣️ How It Works
 
-1. Push project to GitHub
-2. Go to **Render.com → New Web Service**
-3. Connect your GitHub repository
-4. Use the following start command:
-
-```bash
-uvicorn app:app --host 0.0.0.0 --port 10000
 ```
-
-5. Add environment variables in Render dashboard
-6. Click **Deploy**
-
----
-
-## ⚠️ Important Configuration
-
-Update API URL in `frontend.html`:
-
-```javascript
-const API = "https://your-app.onrender.com";
+Patient visits the web app
+        │
+        ▼
+Enters name + email → Clicks "Start Voice Call"
+        │
+        ▼
+Browser captures voice (Web Speech API)
+        │
+        ▼
+Text sent to FastAPI backend → Groq LLM processes intent
+        │
+        ├─ list_doctors_tool()    → Returns available doctors
+        ├─ check_slot_tool()      → Checks if slot is free
+        └─ book_appointment_tool() → Books + sends confirmation email
+        │
+        ▼
+gTTS converts reply to audio → Sarah speaks back to patient
 ```
 
 ---
 
-## 🎯 Key Highlights
+## 👩‍⚕️ Available Doctors (Seed Data)
 
-* Built a **real-world AI healthcare assistant**
-* Implemented **secure authentication system**
-* Integrated **voice-based AI booking system**
-* Developed a **full-stack deployable web application**
-* Designed **user-friendly dashboard interface**
+| Doctor | Specialty |
+|---|---|
+| Dr. Meera Patel | Cardiology |
+| Dr. Arjun Rao | Neurology |
+
+> Doctors can be added directly to the SQLite database.
 
 ---
 
-## 📸 Future Improvements
+## 🔮 Future Improvements
 
-* 🎨 Modern UI with animations
-* 📱 Mobile responsive design
-* 🔔 Real-time notifications
-* 🧠 Advanced AI conversation handling
+- [ ] User authentication (register / login)
+- [ ] Admin dashboard to manage doctors and appointments
+- [ ] Support for more languages and regional accents
+- [ ] Calendar integration (Google Calendar / Outlook)
+- [ ] SMS notifications via Twilio
+- [ ] Docker containerization for easy deployment
+- [ ] Deployment to Railway / Render / AWS
 
 ---
 
 ## 🤝 Contributing
 
-Feel free to fork this project and improve it. Contributions are welcome!
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add some feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
 
 ---
 
-## 📧 Contact
+## 📄 License
 
-For any queries or collaboration:
-
-* 📩 Email: [your_email@gmail.com](mailto:your_email@gmail.com)
-* 💼 LinkedIn: your_linkedin_profile
+This project is open-source and available under the [MIT License](LICENSE).
 
 ---
 
-⭐ If you like this project, don’t forget to **star the repo!**
+## 👤 Author
+
+**Punit Chaudhary**  
+🔗 [github.com/thepunitchaudhary](https://github.com/thepunitchaudhary)
+
+---
+
+*Built with ❤️ using FastAPI, Groq AI, and a passion for making healthcare more accessible.*
