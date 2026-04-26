@@ -8,8 +8,6 @@
 
 > *Patient speaks → Sarah listens → Appointment booked → Email sent*
 
-![Sarah AI Receptionist](./1777219119573_image.png)
-
 ---
 
 ## ✨ Features
