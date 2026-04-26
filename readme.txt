@@ -1,72 +1,190 @@
-City Hospital – Sarah AI Receptionist (v2 with Login)
-======================================================
+# 🏥 City Hospital – Sarah AI Receptionist
 
-WHAT'S NEW IN v2
-----------------
-✅ Patient Login / Register system
-✅ Password hashing (secure)
-✅ Patient Dashboard with appointment history
-✅ Appointments linked to user accounts
-✅ Welcome email on registration
-✅ Auth tokens stored in browser (stays logged in)
-✅ Refresh appointments after every voice call
+An AI-powered voice-based hospital assistant that allows patients to **register, log in, and book appointments using natural voice interaction**. Built with a full-stack architecture and deployable on cloud platforms.
 
-SETUP (100% FREE)
------------------
-1. Install dependencies:
-   pip install -r requirements.txt
+---
 
-2. Create a .env file in the SAME folder as app.py:
+## 🚀 Features
 
-   GROQ_API_KEY=your_groq_key_here
-   SMTP_EMAIL=your_gmail@gmail.com
-   SMTP_PASSWORD=your_gmail_app_password_here
+* 🔐 **Secure Authentication**
 
-   WHERE TO GET THESE:
-   ───────────────────
-   GROQ_API_KEY  → https://console.groq.com  (free, sign up)
-   SMTP_EMAIL    → your Gmail address
-   SMTP_PASSWORD → Gmail App Password (NOT your real password)
-                   Get it: Google Account → Security
-                   → 2-Step Verification → App Passwords
-                   → Select app: Mail, device: Windows
-                   → Copy the 16-character password
+  * User registration & login
+  * Password hashing for security
 
-3. Run the server:
-   python app.py
+* 🎙️ **AI Voice Assistant (Sarah)**
 
-4. Open your browser:
-   http://127.0.0.1:8000
+  * Book appointments using natural speech
+  * Powered by Groq AI
 
-HOW IT WORKS NOW
-----------------
-1. User goes to the website
-2. Registers with name, email, phone, password
-3. Receives a welcome email ✅
-4. Logs in → sees their personal dashboard
-5. Clicks "Start Voice Call with Sarah"
-6. Books appointment by speaking naturally
-7. Appointment saved & confirmation email sent ✅
-8. Dashboard refreshes showing new appointment
+* 📅 **Smart Appointment System**
 
-DEPARTMENTS
------------
-- Cardiology  → Dr. Meera Patel
-- Neurology   → Dr. Arjun Rao
-- Orthopedics → Dr. Priya Nair
+  * Book, store, and retrieve appointments
+  * Linked with user accounts
 
-DEPLOYMENT (FREE)
------------------
-1. Push to GitHub (don't include .env file!)
-2. Go to render.com → New → Web Service
-3. Connect your GitHub repo
-4. Start command: uvicorn app:app --host 0.0.0.0 --port 10000
-5. Add env vars in Render dashboard (Environment tab)
-6. Your app is live at: https://your-app.onrender.com
+* 📊 **Patient Dashboard**
 
-IMPORTANT
----------
-⚠️  Change API_URL in frontend.html line:
-    const API = "http://127.0.0.1:8000";
-    to your Render URL when deploying:
-    const API = "https://your-app.onrender.com";
+  * View appointment history
+  * Auto-refresh after booking
+
+* 📧 **Email Notifications**
+
+  * Welcome email on registration
+  * Appointment confirmation emails
+
+* 🌐 **Persistent Login**
+
+  * Token-based authentication
+  * User stays logged in
+
+---
+
+## 🏥 Departments & Doctors
+
+| Department  | Doctor          |
+| ----------- | --------------- |
+| Cardiology  | Dr. Meera Patel |
+| Neurology   | Dr. Arjun Rao   |
+| Orthopedics | Dr. Priya Nair  |
+
+---
+
+## ⚙️ Tech Stack
+
+* **Backend:** FastAPI (Python)
+* **Frontend:** HTML, CSS, JavaScript
+* **Database:** SQLite
+* **AI Integration:** Groq API
+* **Email Service:** SMTP (Gmail)
+
+---
+
+## 📂 Project Structure
+
+```
+AI Hospital Assistant/
+│
+├── app.py
+├── auth.py
+├── database.py
+├── models.py
+├── utils.py
+├── agent.py
+├── frontend.html
+├── requirements.txt
+├── .env (not uploaded to GitHub)
+└── README.md
+```
+
+---
+
+## 🛠️ Setup Instructions
+
+### 1️⃣ Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 2️⃣ Create `.env` File
+
+Create a `.env` file in the root folder:
+
+```
+GROQ_API_KEY=your_groq_api_key
+SMTP_EMAIL=your_email@gmail.com
+SMTP_PASSWORD=your_gmail_app_password
+```
+
+---
+
+### 🔑 How to Get Credentials
+
+* **GROQ API Key:** https://console.groq.com
+* **SMTP Email:** Your Gmail address
+* **SMTP Password:**
+
+  * Go to Google Account → Security
+  * Enable 2-Step Verification
+  * Generate App Password (Mail, Windows)
+
+---
+
+### 3️⃣ Run the Application
+
+```bash
+python app.py
+```
+
+---
+
+### 4️⃣ Open in Browser
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+## 🌐 Deployment (Render)
+
+1. Push project to GitHub
+2. Go to **Render.com → New Web Service**
+3. Connect your GitHub repository
+4. Use the following start command:
+
+```bash
+uvicorn app:app --host 0.0.0.0 --port 10000
+```
+
+5. Add environment variables in Render dashboard
+6. Click **Deploy**
+
+---
+
+## ⚠️ Important Configuration
+
+Update API URL in `frontend.html`:
+
+```javascript
+const API = "https://your-app.onrender.com";
+```
+
+---
+
+## 🎯 Key Highlights
+
+* Built a **real-world AI healthcare assistant**
+* Implemented **secure authentication system**
+* Integrated **voice-based AI booking system**
+* Developed a **full-stack deployable web application**
+* Designed **user-friendly dashboard interface**
+
+---
+
+## 📸 Future Improvements
+
+* 🎨 Modern UI with animations
+* 📱 Mobile responsive design
+* 🔔 Real-time notifications
+* 🧠 Advanced AI conversation handling
+
+---
+
+## 🤝 Contributing
+
+Feel free to fork this project and improve it. Contributions are welcome!
+
+---
+
+## 📧 Contact
+
+For any queries or collaboration:
+
+* 📩 Email: [your_email@gmail.com](mailto:your_email@gmail.com)
+* 💼 LinkedIn: your_linkedin_profile
+
+---
+
+⭐ If you like this project, don’t forget to **star the repo!**
